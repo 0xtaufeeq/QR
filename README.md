@@ -1,18 +1,34 @@
 # Advanced QR Code Generator
 
-A powerful, customizable QR code generator that works offline with support for custom colors and center images.
+A powerful, completely offline QR code generator with professional design presets and extensive customization options.
 
-## Features
+## 🌐 Live Demo
+**Try it now:** [https://iamsamk.github.io/QR/](https://iamsamk.github.io/QR/)
 
-✅ **URL to QR Code Conversion** - Convert any URL into a QR code instantly
-✅ **Custom Colors** - Customize both background and pattern colors
-✅ **Adjustable Size** - Choose QR code size from 200px to 800px
-✅ **Center Image Support** - Add a logo or image in the center of the QR code
-✅ **Real-time Preview** - See changes instantly as you customize
-✅ **Download Support** - Download QR codes as PNG images
-✅ **Offline Functionality** - Works completely offline after first load
-✅ **Responsive Design** - Works on desktop, tablet, and mobile devices
-✅ **Input Validation** - Automatic URL validation and correction
+## ✨ Features
+
+### 🎨 **8 Professional Presets**
+- **Classic** - Traditional black and white
+- **Professional** - Sleek black background with white pattern
+- **Modern** - Clean contemporary design
+- **Neon** - Vibrant cyan glow effect
+- **Vintage** - Warm sepia tones
+- **Minimal** - Ultra-clean aesthetic
+- **Dark Mode** - Perfect for dark themes
+- **Creative** - Eye-catching gradient design
+
+### 🎛️ **Advanced Customization**
+✅ **Custom Colors** - Full color picker for background and pattern  
+✅ **Gradient Support** - Linear and radial gradients with multiple directions  
+✅ **Dot Size Control** - Adjustable from 20% to 100% for perfect sizing  
+✅ **Shape Styles** - Square, rounded, circle, and diamond patterns  
+✅ **Corner Styles** - Square, rounded, extra-rounded, and dot corners  
+✅ **Size Control** - Scalable from 200px to 800px  
+✅ **Center Image Support** - Add logos with adjustable size (10-30%)  
+✅ **Real-time Preview** - Instant updates as you customize  
+✅ **Download Support** - High-quality PNG export  
+✅ **Offline Functionality** - Works completely without internet  
+✅ **Mobile Responsive** - Perfect on all devices
 
 ## How to Use
 

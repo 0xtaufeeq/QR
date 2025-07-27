@@ -7,7 +7,8 @@ class QRCodeGenerator {
         
         this.initializeElements();
         this.bindEvents();
-        this.applyPreset('classic'); // Set default preset
+        this.updateDotSizeValue(); // Initialize dot size display
+        this.applyPreset('professional'); // Set default preset to match user's image
         this.generateQRCode(); // Generate initial QR code
     }
     
@@ -25,6 +26,8 @@ class QRCodeGenerator {
         this.bgColorValue = document.getElementById('bg-color-value');
         this.fgColorValue = document.getElementById('fg-color-value');
         this.sizeValue = document.getElementById('size-value');
+        this.dotSizeInput = document.getElementById('dot-size');
+        this.dotSizeValue = document.getElementById('dot-size-value');
         this.imageSizeValue = document.getElementById('image-size-value');
         this.imageControls = document.getElementById('image-controls');
         
@@ -47,6 +50,7 @@ class QRCodeGenerator {
         this.bgColorInput.addEventListener('input', () => this.updateColorValue('bg'));
         this.fgColorInput.addEventListener('input', () => this.updateColorValue('fg'));
         this.qrSizeInput.addEventListener('input', () => this.updateSizeValue());
+        this.dotSizeInput.addEventListener('input', () => this.updateDotSizeValue());
         this.imageSizeInput.addEventListener('input', () => this.updateImageSizeValue());
         
         // Generate button
@@ -63,6 +67,7 @@ class QRCodeGenerator {
         this.bgColorInput.addEventListener('input', () => this.generateQRCode());
         this.fgColorInput.addEventListener('input', () => this.generateQRCode());
         this.qrSizeInput.addEventListener('input', () => this.generateQRCode());
+        this.dotSizeInput.addEventListener('input', () => this.generateQRCode());
         this.imageSizeInput.addEventListener('input', () => this.generateQRCode());
         
         // Style controls
@@ -103,6 +108,13 @@ class QRCodeGenerator {
                 dotStyle: 'square',
                 gradient: false
             },
+            professional: {
+                bgColor: '#000000',
+                fgColor: '#ffffff',
+                cornerStyle: 'rounded',
+                dotStyle: 'circle',
+                gradient: false
+            },
             modern: {
                 bgColor: '#f8f9fa',
                 fgColor: '#495057',
@@ -139,13 +151,6 @@ class QRCodeGenerator {
                 fgColor: '#ffffff',
                 cornerStyle: 'rounded',
                 dotStyle: 'rounded',
-                gradient: false
-            },
-            business: {
-                bgColor: '#ffffff',
-                fgColor: '#2c3e50',
-                cornerStyle: 'square',
-                dotStyle: 'square',
                 gradient: false
             },
             creative: {
@@ -218,21 +223,16 @@ class QRCodeGenerator {
         
         ctx.fillStyle = fillStyle;
         
-        // Draw QR modules with custom styles
+        // First, draw the complete finder patterns as solid merged shapes
+        this.drawFinderPatterns(ctx, qrModel, moduleCount, cellSize, margin, options.cornerStyle, fillStyle, options.bgColor);
+        
+        // Then draw the individual data modules (excluding finder pattern areas)
         for (let row = 0; row < moduleCount; row++) {
             for (let col = 0; col < moduleCount; col++) {
-                if (qrModel.isDark(row, col)) {
+                if (qrModel.isDark(row, col) && !this.isFinderPattern(row, col, moduleCount)) {
                     const x = margin + col * cellSize;
                     const y = margin + row * cellSize;
-                    
-                    // Check if it's a finder pattern (corner squares)
-                    const isFinderPattern = this.isFinderPattern(row, col, moduleCount);
-                    
-                    if (isFinderPattern) {
-                        this.drawFinderPattern(ctx, x, y, cellSize, options.cornerStyle, fillStyle);
-                    } else {
-                        this.drawModule(ctx, x, y, cellSize, options.dotStyle, fillStyle);
-                    }
+                    this.drawModule(ctx, x, y, cellSize, options.dotStyle, fillStyle, options.dotSize);
                 }
             }
         }
@@ -248,15 +248,71 @@ class QRCodeGenerator {
         return false;
     }
     
+    drawFinderPatterns(ctx, qrModel, moduleCount, cellSize, margin, style, fillStyle, bgColor) {
+        ctx.fillStyle = fillStyle;
+        
+        // Define finder pattern positions and their components
+        const finderPatterns = [
+            { startRow: 0, startCol: 0 }, // Top-left
+            { startRow: 0, startCol: moduleCount - 7 }, // Top-right
+            { startRow: moduleCount - 7, startCol: 0 } // Bottom-left
+        ];
+        
+        finderPatterns.forEach(pattern => {
+            // Draw outer 7x7 square
+            const outerX = margin + pattern.startCol * cellSize;
+            const outerY = margin + pattern.startRow * cellSize;
+            const outerSize = 7 * cellSize;
+            
+            this.drawStyledRect(ctx, outerX, outerY, outerSize, outerSize, style, fillStyle);
+            
+            // Draw inner white 5x5 square (background color)
+            ctx.fillStyle = bgColor;
+            const innerX = outerX + cellSize;
+            const innerY = outerY + cellSize;
+            const innerSize = 5 * cellSize;
+            
+            this.drawStyledRect(ctx, innerX, innerY, innerSize, innerSize, style, ctx.fillStyle);
+            
+            // Draw center 3x3 square (foreground color)
+            ctx.fillStyle = fillStyle;
+            const centerX = outerX + 2 * cellSize;
+            const centerY = outerY + 2 * cellSize;
+            const centerSize = 3 * cellSize;
+            
+            this.drawStyledRect(ctx, centerX, centerY, centerSize, centerSize, style, fillStyle);
+        });
+    }
+    
+    drawStyledRect(ctx, x, y, width, height, style, fillStyle) {
+        ctx.fillStyle = fillStyle;
+        
+        switch (style) {
+            case 'rounded':
+                this.drawRoundedRect(ctx, x, y, width, height, width * 0.15);
+                break;
+            case 'extra-rounded':
+                this.drawRoundedRect(ctx, x, y, width, height, width * 0.25);
+                break;
+            case 'dots':
+                this.drawCircle(ctx, x + width/2, y + height/2, width * 0.4);
+                break;
+            default:
+                ctx.fillRect(x, y, width, height);
+        }
+    }
+    
     drawFinderPattern(ctx, x, y, cellSize, style, fillStyle) {
         ctx.fillStyle = fillStyle;
         
         switch (style) {
             case 'rounded':
-                this.drawRoundedRect(ctx, x, y, cellSize, cellSize, cellSize * 0.2);
+                // Heavily rounded corners for the large finder patterns
+                this.drawRoundedRect(ctx, x, y, cellSize, cellSize, cellSize * 0.35);
                 break;
             case 'extra-rounded':
-                this.drawRoundedRect(ctx, x, y, cellSize, cellSize, cellSize * 0.4);
+                // Extra rounded for even more circular appearance
+                this.drawRoundedRect(ctx, x, y, cellSize, cellSize, cellSize * 0.45);
                 break;
             case 'dots':
                 this.drawCircle(ctx, x + cellSize/2, y + cellSize/2, cellSize * 0.4);
@@ -266,21 +322,30 @@ class QRCodeGenerator {
         }
     }
     
-    drawModule(ctx, x, y, cellSize, style, fillStyle) {
+    drawModule(ctx, x, y, cellSize, style, fillStyle, dotSizePercent = 45) {
         ctx.fillStyle = fillStyle;
+        const dotSize = dotSizePercent / 100; // Convert percentage to decimal
         
         switch (style) {
             case 'rounded':
-                this.drawRoundedRect(ctx, x, y, cellSize, cellSize, cellSize * 0.2);
+                // Heavily rounded squares that appear almost circular for small dots
+                const padding = cellSize * (1 - dotSize) / 2;
+                const size = cellSize * dotSize;
+                this.drawRoundedRect(ctx, x + padding, y + padding, size, size, size * 0.5);
                 break;
             case 'circle':
-                this.drawCircle(ctx, x + cellSize/2, y + cellSize/2, cellSize * 0.4);
+                // Perfect spherical dots like in the reference image
+                this.drawCircle(ctx, x + cellSize/2, y + cellSize/2, cellSize * dotSize * 0.5);
                 break;
             case 'diamond':
-                this.drawDiamond(ctx, x, y, cellSize);
+                const diamondPadding = cellSize * (1 - dotSize) / 2;
+                const diamondSize = cellSize * dotSize;
+                this.drawDiamond(ctx, x + diamondPadding, y + diamondPadding, diamondSize);
                 break;
             default:
-                ctx.fillRect(x, y, cellSize, cellSize);
+                const squarePadding = cellSize * (1 - dotSize) / 2;
+                const squareSize = cellSize * dotSize;
+                ctx.fillRect(x + squarePadding, y + squarePadding, squareSize, squareSize);
         }
     }
     
@@ -326,6 +391,10 @@ class QRCodeGenerator {
     
     updateSizeValue() {
         this.sizeValue.textContent = this.qrSizeInput.value + 'px';
+    }
+    
+    updateDotSizeValue() {
+        this.dotSizeValue.textContent = this.dotSizeInput.value + '%';
     }
     
     updateImageSizeValue() {
@@ -414,6 +483,7 @@ class QRCodeGenerator {
                 fgColor: fgColor,
                 cornerStyle: cornerStyle,
                 dotStyle: dotStyle,
+                dotSize: parseInt(this.dotSizeInput.value),
                 useGradient: useGradient,
                 gradientStart: this.gradientStartInput.value,
                 gradientEnd: this.gradientEndInput.value,
